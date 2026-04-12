@@ -161,23 +161,17 @@ def main():
     """)
 
     print("\n  Agregando ingresos ficticios sep 2024 → hoy:")
-    agregar_ingresos_ficticios(conn_demo, engine_demo)
+    agregar_ingresos_ficticios(conn_demo)
+    agregar_gastos_ficticios(conn_demo)
+
 
     conn_real.close()
     conn_demo.close()
 
-def agregar_ingresos_ficticios(conn_demo, engine_demo):
-    """
-    Agrega ingresos ficticios sep 2024 → abr 2026
-    basados en el promedio histórico con variabilidad ±23%
-    """
-    import pandas as pd
+def agregar_ingresos_ficticios(conn_demo):
     from datetime import date
-
-    # Promedio histórico base (Arcaya base en EUR × TC promedio)
-    ingreso_base_clp = 1491895  # promedio real
-
-    # Meses a agregar (sep 2024 en adelante sin ingresos reales)
+    ingreso_base_clp = 1491895
+    cur = conn_demo.cursor()
     meses = []
     anio, mes = 2024, 9
     hoy = date.today()
@@ -188,9 +182,6 @@ def agregar_ingresos_ficticios(conn_demo, engine_demo):
             mes = 1
             anio += 1
 
-    # Obtener TC para cada mes
-    cur = conn_demo.cursor()
-    registros = []
     for anio, mes in meses:
         cur.execute(
             "SELECT clp_eur FROM tipo_cambio WHERE anio=? AND mes=?",
@@ -198,25 +189,61 @@ def agregar_ingresos_ficticios(conn_demo, engine_demo):
         )
         row = cur.fetchone()
         tc = row[0] if row else 1070.0
-
-        # Ingreso con variabilidad ±23%
         factor = 1 + random.uniform(-0.23, 0.23)
         monto = round(ingreso_base_clp * factor, 0)
-
-        registros.append({
-            "fecha": f"{anio}-{mes:02d}-15 00:00:00.000000",
-            "descripcion": "Ingresos Por Cuenta Propia",
-            "cargo_clp": 0.0,
-            "abono_clp": monto,
-            "anio": anio,
-            "mes": mes,
-            "categoria_padre": "transferencias",
-            "subcategoria": "ingreso_laboral",
-        })
+        cur.execute("""
+            INSERT INTO cc_movimientos
+            (fecha, descripcion, cargo_clp, abono_clp, anio, mes,
+             categoria_padre, subcategoria)
+            VALUES (?, ?, 0.0, ?, ?, ?, 'transferencias', 'ingreso_laboral')
+        """, (f"{anio}-{mes:02d}-15 00:00:00.000000",
+              "Ingresos Por Cuenta Propia",
+              monto, anio, mes))
         print(f"    {anio}-{mes:02d}: ${monto:,.0f} CLP ≈ €{monto/tc:.0f}")
 
-    df = pd.DataFrame(registros)
-    df.to_sql("cc_movimientos", engine_demo, if_exists="append", index=False)
-    print(f"  → {len(registros)} meses de ingresos ficticios agregados")
+    conn_demo.commit()
+    print(f"  → {len(meses)} meses de ingresos ficticios agregados")
+
+def agregar_gastos_ficticios(conn_demo):
+    """
+    Agrega gastos ficticios sep 2024 → feb 2026
+    en CLP acordes a vivir en Las Condes
+    """
+    from datetime import date
+    cur = conn_demo.cursor()
+
+    meses = []
+    anio, mes = 2024, 9
+    while (anio, mes) <= (2026, 2):
+        meses.append((anio, mes))
+        mes += 1
+        if mes > 12:
+            mes = 1
+            anio += 1
+
+    gastos_base = {
+        ("alimentacion", "supermercado"):  280000,
+        ("alimentacion", "restaurante"):   150000,
+        ("transporte",   "bencina"):        80000,
+        ("transporte",   "uber_taxi"):      25000,
+        ("salud_deporte","gimnasio"):       45000,
+        ("servicios",    "suscripcion"):    15000,
+    }
+
+    for anio, mes in meses:
+        for (cat, sub), clp_base in gastos_base.items():
+            factor = 1 + random.uniform(-0.23, 0.23)
+            clp = round(clp_base * factor, 0)
+            cur.execute("""
+                INSERT INTO cc_movimientos
+                (fecha, descripcion, cargo_clp, abono_clp, anio, mes,
+                 categoria_padre, subcategoria)
+                VALUES (?, ?, ?, 0.0, ?, ?, ?, ?)
+            """, (f"{anio}-{mes:02d}-15 00:00:00.000000",
+                  f"Gasto Demo {sub}", clp, anio, mes, cat, sub))
+
+    conn_demo.commit()
+    print(f"  → {len(meses)} meses de gastos ficticios agregados (Las Condes)")
+    
 if __name__ == "__main__":
     main()
