@@ -90,7 +90,9 @@ def cargar_ingresos():
     """, conn)
     conn.close()
     df["empresa"] = df["descripcion"].apply(
-        lambda x: "PwC" if "PRICEWATERH" in x else "Clínica Arcaya")
+        lambda x: "PwC" if "PRICEWATERH" in x 
+        else "Por Cuenta Propia" if "Cuenta Propia" in x
+        else "Clínica Arcaya")
     df["fecha"] = pd.to_datetime(df.apply(
         lambda r: f"{int(r.anio)}-{int(r.mes):02d}-01", axis=1))
     df["label"] = df.apply(lambda r: lbl(r.anio, r.mes), axis=1)

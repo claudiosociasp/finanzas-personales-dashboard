@@ -160,8 +160,63 @@ def main():
   ─────────────────────────────────────────────────
     """)
 
+    print("\n  Agregando ingresos ficticios sep 2024 → hoy:")
+    agregar_ingresos_ficticios(conn_demo, engine_demo)
+
     conn_real.close()
     conn_demo.close()
 
+def agregar_ingresos_ficticios(conn_demo, engine_demo):
+    """
+    Agrega ingresos ficticios sep 2024 → abr 2026
+    basados en el promedio histórico con variabilidad ±23%
+    """
+    import pandas as pd
+    from datetime import date
+
+    # Promedio histórico base (Arcaya base en EUR × TC promedio)
+    ingreso_base_clp = 1491895  # promedio real
+
+    # Meses a agregar (sep 2024 en adelante sin ingresos reales)
+    meses = []
+    anio, mes = 2024, 9
+    hoy = date.today()
+    while (anio, mes) <= (hoy.year, hoy.month):
+        meses.append((anio, mes))
+        mes += 1
+        if mes > 12:
+            mes = 1
+            anio += 1
+
+    # Obtener TC para cada mes
+    cur = conn_demo.cursor()
+    registros = []
+    for anio, mes in meses:
+        cur.execute(
+            "SELECT clp_eur FROM tipo_cambio WHERE anio=? AND mes=?",
+            (anio, mes)
+        )
+        row = cur.fetchone()
+        tc = row[0] if row else 1070.0
+
+        # Ingreso con variabilidad ±23%
+        factor = 1 + random.uniform(-0.23, 0.23)
+        monto = round(ingreso_base_clp * factor, 0)
+
+        registros.append({
+            "fecha": f"{anio}-{mes:02d}-15 00:00:00.000000",
+            "descripcion": "Ingresos Por Cuenta Propia",
+            "cargo_clp": 0.0,
+            "abono_clp": monto,
+            "anio": anio,
+            "mes": mes,
+            "categoria_padre": "transferencias",
+            "subcategoria": "ingreso_laboral",
+        })
+        print(f"    {anio}-{mes:02d}: ${monto:,.0f} CLP ≈ €{monto/tc:.0f}")
+
+    df = pd.DataFrame(registros)
+    df.to_sql("cc_movimientos", engine_demo, if_exists="append", index=False)
+    print(f"  → {len(registros)} meses de ingresos ficticios agregados")
 if __name__ == "__main__":
     main()
