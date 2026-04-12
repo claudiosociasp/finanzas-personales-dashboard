@@ -215,7 +215,7 @@ Los datos financieros reales, PDFs de estados de cuenta y archivos Excel están 
 Data Analyst / Business Intelligence — +5 años experiencia
 Santiago de Chile → Madrid, España
 
-[![LinkedIn](www.linkedin.com/in/claudio-socías)](https://linkedin.com/in/tu-perfil)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Claudio_Socias-blue)](https://www.linkedin.com/in/claudio-socías)
 
 ---
 
