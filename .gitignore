@@ -1,0 +1,43 @@
+# ── Datos personales reales — NUNCA subir al repo ─────────────────
+finanzas.db
+finanzas_demo.db
+
+# Estados de cuenta y extractos bancarios
+tarjeta_credito/
+cuenta_corriente/
+global66/
+santander_españa/
+datos_macro/TCB_*.xlsx
+
+# Variables de entorno
+.env
+.env.local
+
+# ── Python ────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+.Python
+venv/
+env/
+.venv/
+pip-log.txt
+
+# ── macOS ─────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# ── VS Code ───────────────────────────────────────────────────────
+.vscode/
+*.code-workspace
+
+# ── Jupyter ───────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── Outputs temporales ────────────────────────────────────────────
+dashboard_financiero.html
+*.log
