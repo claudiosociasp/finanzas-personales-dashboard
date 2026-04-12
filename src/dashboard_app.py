@@ -12,7 +12,7 @@ Uso:
     python src/dashboard_app.py
     Abre http://127.0.0.1:8050
 """
-
+import os
 import sqlite3
 import numpy as np
 import pandas as pd
@@ -24,7 +24,7 @@ from dash import dcc, html, Input, Output, callback
 import plotly.graph_objects as go
 
 BASE_DIR = Path(__file__).parent.parent
-DB_FILE  = str(BASE_DIR / "finanzas.db")
+DB_FILE = str(BASE_DIR / os.environ.get("DB_FILE", "finanzas_demo.db"))
 
 MESES_ES = {1:"Ene",2:"Feb",3:"Mar",4:"Abr",5:"May",6:"Jun",
             7:"Jul",8:"Ago",9:"Sep",10:"Oct",11:"Nov",12:"Dic"}
@@ -322,7 +322,7 @@ def kpi(titulo, valor, sub, color=ACENTO):
 # ── Layout ─────────────────────────────────────────────────────────────────────
 app = dash.Dash(__name__, title="Dashboard Financiero — Claudio Socias",
                 suppress_callback_exceptions=True)
-
+server = app.server
 app.layout = html.Div([
     # Header
     html.Div([
@@ -1030,4 +1030,6 @@ if __name__ == "__main__":
     print("  Abre en tu navegador: http://127.0.0.1:8050")
     print("  Detener: Ctrl+C")
     print("="*55)
-    app.run(debug=False, host="127.0.0.1", port=8050)
+    import os
+    port = int(os.environ.get("PORT", 8050))
+    app.run(debug=False, host="0.0.0.0", port=port)
