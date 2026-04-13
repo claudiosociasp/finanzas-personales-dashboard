@@ -1,8 +1,11 @@
 # 📊 Finanzas Personales — Dashboard de Análisis Financiero
 
-> Proyecto de portfolio en Python que integra datos bancarios reales de Chile y España para construir un sistema completo de análisis financiero personal con dashboard interactivo.
+> Proyecto de portfolio completo en Python que integra datos bancarios reales de Chile y España para construir un sistema de análisis financiero personal con ETL automatizado, base de datos SQLite, queries SQL avanzadas y dashboard interactivo publicado en la nube.
 
-**Stack:** Python · SQLite · Pandas · Dash · Plotly · SQL · APIs REST
+**Stack:** Python · SQLite · Pandas · Dash · Plotly · SQL · APIs REST  
+**Código:** 5.627 líneas · 17 scripts · 1 dashboard interactivo · 10 queries SQL avanzadas  
+**Demo:** [finanzas-personales-dashboard.onrender.com](https://finanzas-personales-dashboard.onrender.com)  
+**Repo:** [github.com/claudiosociasp/finanzas-personales-dashboard](https://github.com/claudiosociasp/finanzas-personales-dashboard)
 
 ---
 
@@ -10,7 +13,7 @@
 
 Proyecto desarrollado durante mi transición profesional de Santiago de Chile a Madrid (2023–2026). Combina datos reales de tres fuentes bancarias para responder preguntas concretas:
 
-- ¿Cuánto perdí en poder adquisitivo por la depreciación del CLP?
+- ¿Cuánto perdí en poder adquisitivo por la depreciación del CLP frente al EUR?
 - ¿Cuál es mi tasa de ahorro real incluyendo gastos de tarjeta de crédito?
 - ¿Cómo se compara el costo de vida en Las Condes vs Barrio Salamanca?
 - ¿Cuánto ahorro liquidando mi deuda en septiembre 2026 vs seguir en cuotas?
@@ -23,20 +26,21 @@ Proyecto desarrollado durante mi transición profesional de Santiago de Chile a 
 ```
 finanzas_personales/
 ├── src/
-│   ├── etl_tarjeta.py          # ETL estados de cuenta TC (PDF → SQLite)
-│   ├── etl_cuenta.py           # ETL cuenta corriente (Excel → SQLite)
+│   ├── etl_tarjeta.py                    # ETL estados de cuenta TC (PDF → SQLite)
+│   ├── etl_cuenta.py                     # ETL cuenta corriente (Excel → SQLite)
 │   ├── etl_global66_santander_españa.py  # ETL Global66 + Santander España
-│   ├── categorias.py           # 346 palabras clave → 8 categorías padre
-│   ├── recategorizar.py        # Aplicar categorías a todas las tablas
-│   ├── tipo_cambio.py          # TC CLP/EUR histórico (BCCh + API)
-│   ├── actualizar_mercado.py   # IPC, alquiler, salarios (INE + BCCh + WB)
-│   ├── analisis_comparativo.py # Análisis Chile vs España
-│   ├── queries_avanzadas.py    # 10 queries SQL con insights financieros
-│   ├── dashboard_app.py        # Dashboard interactivo Dash
-│   └── generar_demo.py         # Genera DB demo con datos anonimizados
-├── datos_macro/                # Archivos BCCh (TC histórico)
-├── finanzas_demo.db            # DB demo con datos anonimizados ±15%
-├── .env.example                # Variables de entorno (copiar como .env)
+│   ├── categorias.py                     # 346 palabras clave → 8 categorías padre
+│   ├── recategorizar.py                  # Aplicar categorías a todas las tablas
+│   ├── tipo_cambio.py                    # TC CLP/EUR histórico (BCCh + API)
+│   ├── actualizar_mercado.py             # IPC, alquiler, salarios (INE + BCCh + WB)
+│   ├── analisis_comparativo.py           # Análisis Chile vs España
+│   ├── queries_avanzadas.py              # 10 queries SQL con insights financieros
+│   ├── dashboard_app.py                  # Dashboard interactivo Dash (1.034 líneas)
+│   └── generar_demo.py                   # Genera DB demo con datos anonimizados
+├── datos_macro/                          # Archivos BCCh (TC histórico)
+├── finanzas_demo.db                      # DB demo con datos anonimizados ±18%
+├── Procfile                              # Configuración deploy Render
+├── .env.example                          # Variables de entorno (copiar como .env)
 └── requirements.txt
 ```
 
@@ -67,6 +71,8 @@ finanzas_personales/
     └────────────────┘  └────────────────┘  └─────────────────┘
 ```
 
+**Total registros:** 4.399 filas · 10 tablas · 346 reglas de categorización · 0 sin clasificar
+
 ---
 
 ## 📡 Fuentes de datos e integraciones
@@ -87,52 +93,68 @@ finanzas_personales/
 
 ## 📊 Dashboard interactivo
 
-El dashboard incluye **filtros globales** (año / trimestre / mes) que actualizan todos los gráficos simultáneamente.
+**URL pública:** [finanzas-personales-dashboard.onrender.com](https://finanzas-personales-dashboard.onrender.com)
 
-### Sección 1 — Mercado cambiario e ingresos
-- Evolución tipo de cambio CLP/EUR con promedio y hitos
-- Ingresos laborales por empresa con tendencia y ecuación de la recta
+El dashboard incluye **filtros globales** (año / trimestre / mes) que actualizan todos los gráficos simultáneamente y **6 KPIs dinámicos**: ingresos laborales, gasto total, costo deuda, TC promedio, saldo deuda TC y balance estimado.
 
-### Sección 2 — Evolución de gastos y deuda
-- Gasto mensual CC desglosado (corriente vs deuda) con tendencia
-- Evolución deuda TC con saldo pendiente y proyección liquidación
+### Sección 1 — Mercado cambiario e ingresos laborales
+- Evolución tipo de cambio CLP/EUR con promedio histórico
+- Ingresos laborales por empresa (PwC / Clínica Arcaya / Por Cuenta Propia) con tendencia
+
+### Sección 2 — Evolución de gastos y balance
+- Gasto mensual desglosado (corriente vs deuda TC) con tendencia
+- Balance mensual (todos los ingresos − todos los gastos)
 
 ### Sección 3 — Distribución de gastos
-- Barras horizontales agrupadas por categoría y subcategoría
+- Barras horizontales agrupadas por categoría y subcategoría (8 categorías padre, 30+ subcategorías)
 
 ### Sección 4 — Análisis comparativo Chile vs España
-- Poder adquisitivo Las Condes vs Salamanca ajustado por IPC
+- Poder adquisitivo Las Condes vs Barrio Salamanca ajustado por IPC
 - Comparación salarial Data/BI con rangos de mercado Madrid 2026
 
 ### Sección 5 — Análisis financiero avanzado
 - Gastos mensuales CC + TC vs ingresos reales
-- Top 10 categorías gasto tarjeta de crédito
+- Top 10 categorías gasto tarjeta de crédito (histórico)
 - Tasa de ahorro real mensual (CC + TC)
 - Top 10 comercios por gasto total
 - Proyección liquidación deuda: Escenario A (cuotas) vs B (liquidar sep 2026)
 
 ---
 
-## 🔍 Queries SQL avanzadas (`queries_avanzadas.py`)
+## 🔍 Queries SQL avanzadas
 
-| Query | Insight |
-|-------|---------|
+| Query | Insight clave |
+|-------|---------------|
 | Q1 | Ingreso real neto mensual promedio por empresa |
 | Q3 | Top 10 comercios por gasto total |
-| Q5 | % ingresos destinado a deuda (solo CC) |
-| Q5b | % ingresos destinado a deuda (CC + TC real) |
-| Q6 | Intereses reales vs capital amortizado |
-| Q7 | Ahorro por liquidar deuda en sep 2026 vs seguir en cuotas |
-| Q8 | Tasa de ahorro real (solo CC) |
-| Q8b | Tasa de ahorro real (CC + TC) — revela gasto oculto |
-| Q9 | Gasto corriente Las Condes vs Barrio Salamanca |
+| Q5 | % ingresos destinado a deuda (solo CC) — promedio 12.8% |
+| Q5b | % ingresos destinado a deuda (CC + TC) — promedio 67.6% |
+| Q6 | Intereses reales vs capital amortizado — costo financiero €743 |
+| Q7 | Ahorro por liquidar deuda sep 2026 — €725 en intereses |
+| Q8 | Tasa de ahorro aparente (solo CC) — 57.9% |
+| Q8b | Tasa de ahorro real (CC + TC) — 3.1% |
+| Q9 | Gasto corriente Las Condes €1.038/mes vs Salamanca €525/mes |
 
 ### Hallazgos clave
-- **Depreciación CLP:** pérdida de €420/mes en poder adquisitivo entre feb 2023 y sep 2025
-- **Gasto oculto TC:** tasa de ahorro aparente 57.9% (solo CC) → tasa real 3.1% (con TC)
-- **Liquidación deuda:** ahorro de €725 en intereses + libera €265/mes desde oct 2026
-- **Mercado Madrid:** el mismo perfil senior paga 2.1x–2.6x más que en Chile
+- **Depreciación CLP:** pérdida de €420/mes en poder adquisitivo feb 2023 → sep 2025
+- **Gasto oculto TC:** tasa de ahorro aparente 57.9% → tasa real 3.1% al incluir TC
+- **Liquidación deuda:** ahorro de €725 + libera €265/mes desde oct 2026
+- **Mercado Madrid:** mismo perfil senior paga 2.1x–2.6x más que en Chile
 - **Costo de vida:** Madrid €525/mes vs Las Condes €1.038/mes en gastos corrientes
+
+---
+
+## 👤 Perfil profesional vs mercado Madrid
+
+El proyecto incluye un análisis comparativo del mercado salarial Data/BI en Madrid basado en datos de Glassdoor y LinkedIn 2026:
+
+- **Perfil**: Data Analyst / BI Senior (+5 años experiencia)
+- **Stack**: Power BI, SQL, Tableau, Salesforce, Python (en progreso)
+- **Empresas**: PricewaterhouseCoopers, Clínica Lo Arcaya
+- **Rango estimado Madrid**: €38.000 — €46.000/año bruto
+- **Referencia Chile**: €40.306/año bruto (último cargo)
+
+El gráfico "Comparación Salarial: Chile vs Madrid" muestra que el mismo perfil senior en Madrid equivale a 2.1x–2.6x el salario equivalente en Chile.
 
 ---
 
@@ -145,8 +167,8 @@ El dashboard incluye **filtros globales** (año / trimestre / mes) que actualiza
 ### Setup
 
 ```bash
-git clone https://github.com/tu-usuario/finanzas-personales.git
-cd finanzas-personales
+git clone https://github.com/claudiosociasp/finanzas-personales-dashboard.git
+cd finanzas-personales-dashboard
 
 # Crear entorno virtual
 python -m venv venv
@@ -175,11 +197,20 @@ python src/tipo_cambio.py          # TC CLP/EUR
 python src/actualizar_mercado.py   # IPC, alquiler, salarios
 ```
 
-### Ejecutar análisis
+### Ejecutar análisis SQL
 
 ```bash
-python src/analisis_comparativo.py  # Comparación Chile vs España
-python src/queries_avanzadas.py     # 10 queries con insights
+python src/queries_avanzadas.py    # 10 queries con insights
+python src/analisis_comparativo.py # Comparación Chile vs España
+```
+
+### Flujo mensual de actualización
+
+```bash
+python src/tipo_cambio.py
+python src/actualizar_mercado.py
+python src/etl_global66_santander_españa.py  # nuevos extractos
+python src/recategorizar.py
 ```
 
 ---
@@ -187,9 +218,11 @@ python src/queries_avanzadas.py     # 10 queries con insights
 ## 🔒 Privacidad de datos
 
 El repositorio incluye `finanzas_demo.db` con datos **sintéticos y anonimizados**:
-- Montos alterados con ruido aleatorio ±15%
-- Nombres de empresas reemplazados por `EMPRESA_A` / `EMPRESA_B`
+- Montos alterados con ruido aleatorio ±18%
+- Nombres de empresas mantenidos (PwC, Clínica Arcaya — no son datos sensibles)
 - RUTs reemplazados por `RUT_ANONIMO`
+- Ingresos ficticios sep 2024 → abr 2026 con variabilidad ±23%
+- Gastos ficticios sep 2024 → feb 2026 con nombres de comercios chilenos reales
 - Datos públicos (tipo de cambio, IPC, índices) copiados tal cual
 
 Los datos financieros reales, PDFs de estados de cuenta y archivos Excel están en `.gitignore`.
@@ -204,18 +237,37 @@ Los datos financieros reales, PDFs de estados de cuenta y archivos Excel están 
 | SQLite + SQLAlchemy | Base de datos local |
 | Pandas | ETL y transformación de datos |
 | pdfplumber | Extracción de PDFs bancarios |
-| Dash 4.1 + Plotly 6.7 | Dashboard interactivo |
+| Dash 4.x + Plotly 6.x | Dashboard interactivo |
+| Gunicorn | Servidor WSGI para producción |
+| Render | Deploy en la nube (plan gratuito) |
 | APIs REST | IPC, TC, alquiler, salarios |
 
 ---
 
-## 👤 Autor
+## 📈 Métricas del proyecto
 
-**Claudio Socias Paradiz**
-Data Analyst / Business Intelligence — +5 años experiencia
+| Métrica | Valor |
+|---------|-------|
+| Líneas de código Python | 5.627 |
+| Scripts desarrollados | 17 |
+| Registros procesados | 4.399 |
+| Palabras clave de categorización | 346 |
+| Registros sin clasificar | 0 |
+| Fuentes de datos integradas | 9 |
+| Queries SQL avanzadas | 10 |
+| Gráficos interactivos | 13 |
+| Meses de datos históricos | 38 |
+
+---
+
+## 👨‍💻 Autor
+
+**Claudio Socias Paradiz**  
+Data Analyst / Business Intelligence — +5 años experiencia  
 Santiago de Chile → Madrid, España
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Claudio_Socias-blue)](https://www.linkedin.com/in/claudio-socías)
+[![GitHub](https://img.shields.io/badge/GitHub-claudiosociasp-black)](https://github.com/claudiosociasp)
 
 ---
 
