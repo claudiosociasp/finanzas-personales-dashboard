@@ -24,7 +24,8 @@ from dash import dcc, html, Input, Output, callback
 import plotly.graph_objects as go
 
 BASE_DIR = Path(__file__).parent.parent
-DB_FILE = str(BASE_DIR / os.environ.get("DB_FILE", "finanzas_demo.db"))
+DB_FILE = str(BASE_DIR / os.environ.get("DB_FILE", "finanzas.db"))
+
 
 MESES_ES = {1:"Ene",2:"Feb",3:"Mar",4:"Abr",5:"May",6:"Jun",
             7:"Jul",8:"Ago",9:"Sep",10:"Oct",11:"Nov",12:"Dic"}
@@ -516,18 +517,21 @@ def cb_ing(anio, trim, mes):
                           values="eur", aggfunc="sum", fill_value=0
                          ).reset_index().sort_values("fecha")
     fig = go.Figure()
-    for emp, color in [("PwC", AZUL), ("Clínica Arcaya", AZUL_C)]:
+    for emp, color in [("PwC", AZUL), ("Clínica Arcaya", AZUL_C), ("Por Cuenta Propia", VERDE)]:
         if emp in piv.columns:
             fig.add_trace(go.Bar(
                 x=piv["label"], y=piv[emp], name=emp, marker_color=color,
                 hovertemplate=f"<b>%{{x}}</b><br>{emp}: €%{{y:,.0f}}<extra></extra>",
             ))
-    cols = [c for c in ["PwC","Clínica Arcaya"] if c in piv.columns]
+    cols = [c for c in ["PwC","Clínica Arcaya","Por Cuenta Propia"] if c in piv.columns]
     if cols and len(piv) > 2:
         total = piv[cols].sum(axis=1).values
-        coef  = np.polyfit(np.arange(len(total)), total, 1)
-        tend  = np.polyval(coef, np.arange(len(total)))
-        pend  = coef[0]
+        total_filtrado = total[total > 0]
+        x_filtrado = np.arange(len(total_filtrado))
+        coef = np.polyfit(x_filtrado, total_filtrado, 1)
+        pend = coef[0]
+        tend = np.polyval(coef, np.arange(len(total)))
+        tend = np.polyval(coef, np.arange(len(total)))
         fig.add_trace(go.Scatter(
             x=piv["label"], y=tend, mode="lines",
             name=f"Tendencia ({'+' if pend>=0 else ''}€{pend:.0f}/mes)",
