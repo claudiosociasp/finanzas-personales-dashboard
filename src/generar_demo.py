@@ -229,6 +229,14 @@ def agregar_gastos_ficticios(conn_demo):
         ("salud_deporte","gimnasio"):       45000,
         ("servicios",    "suscripcion"):    15000,
     }
+    nombres_demo = {
+        "supermercado":    "JUMBO LAS CONDES",
+        "restaurante":     "TAMANGO VITACURA",
+        "bencina":         "COPEC APOQUINDO",
+        "uber_taxi":       "UBER TRIP",
+        "gimnasio":        "GIMNASIO EL MURO LARRA",
+        "suscripcion":     "NETFLIX",
+    }
 
     for anio, mes in meses:
         for (cat, sub), clp_base in gastos_base.items():
@@ -240,7 +248,7 @@ def agregar_gastos_ficticios(conn_demo):
                  categoria_padre, subcategoria)
                 VALUES (?, ?, ?, 0.0, ?, ?, ?, ?)
             """, (f"{anio}-{mes:02d}-15 00:00:00.000000",
-                  f"Gasto Demo {sub}", clp, anio, mes, cat, sub))
+                 nombres_demo.get(sub, sub), clp, anio, mes, cat, sub))
 
     conn_demo.commit()
     print(f"  → {len(meses)} meses de gastos ficticios agregados (Las Condes)")
