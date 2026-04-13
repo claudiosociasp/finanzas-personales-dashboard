@@ -400,7 +400,7 @@ app.layout = html.Div([
         html.Div([
             html.Div([dcc.Graph(id="g-gasto", config={"displayModeBar":False})],
                      style={"flex":"1","marginRight":"16px"}),
-            html.Div([dcc.Graph(id="g-deuda", config={"displayModeBar":False})],
+            html.Div([dcc.Graph(id="g-balance", config={"displayModeBar":False})],
                      style={"flex":"1"}),
         ], style={"display":"flex"}),
     ], style={**ESTILO_CARD,"margin":"0 24px 20px 24px"}),
@@ -575,91 +575,52 @@ def cb_gasto(anio, trim, mes):
     return fig
 
 
-@callback(Output("g-deuda","figure"),
+@callback(Output("g-balance","figure"),
           Input("f-anio","value"), Input("f-trim","value"), Input("f-mes","value"))
-def cb_deuda(anio, trim, mes):
-    dff = filtrar(df_deuda, anio, trim, mes).sort_values("fecha")
+def cb_balance(anio, trim, mes):
+    dff_gm = filtrar(df_gm, anio, trim, mes).sort_values("fecha")
+
+    conn = get_conn()
+    df_abonos = pd.read_sql("""
+        SELECT m.anio, m.mes,
+               ROUND(SUM(m.abono_clp / t.clp_eur), 0) as eur
+        FROM cc_movimientos m
+        JOIN tipo_cambio t ON m.anio = t.anio AND m.mes = t.mes
+        WHERE m.abono_clp > 0
+        AND m.subcategoria NOT IN ('ignorar')
+        GROUP BY m.anio, m.mes
+        ORDER BY m.anio, m.mes
+    """, conn)
+    conn.close()
+    df_abonos["fecha"] = pd.to_datetime(df_abonos.apply(
+        lambda r: f"{int(r.anio)}-{int(r.mes):02d}-01", axis=1))
+    df_abonos["label"] = df_abonos.apply(lambda r: lbl(r.anio, r.mes), axis=1)
+    dff_abonos = filtrar(df_abonos, anio, trim, mes).sort_values("fecha")
+
+    if dff_abonos.empty:
+        return layout_base(go.Figure(), "💰 Balance Mensual")
+
+    merged = dff_abonos.merge(
+        dff_gm[["fecha","corriente_eur","deuda_eur"]], on="fecha", how="left"
+    ).fillna(0)
+    merged["total_gastos"] = merged["corriente_eur"] + merged["deuda_eur"]
+    merged["balance"] = merged["eur"] - merged["total_gastos"]
+
+    colores = [VERDE if b >= 0 else ROJO for b in merged["balance"]]
     fig = go.Figure()
-    if dff.empty:
-        return layout_base(fig, "💳 Evolución de Deuda TC")
-
-    # Barras componentes
     fig.add_trace(go.Bar(
-        x=dff["label"], y=dff["amort_deuda"], name="Amortización Deuda TC",
-        marker_color=NARANJA, opacity=0.9,
-        hovertemplate="<b>%{x}</b><br>Amort.: €%{y:,.0f}<extra></extra>",
+        x=merged["label"], y=merged["balance"],
+        marker_color=colores, name="Balance",
+        hovertemplate="<b>%{x}</b><br>Balance: €%{y:,.0f}<extra></extra>",
     ))
-    fig.add_trace(go.Bar(
-        x=dff["label"], y=dff["pago_minimo"], name="Pago Mínimo TC",
-        marker_color=ROJO, opacity=0.9,
-        hovertemplate="<b>%{x}</b><br>Pago mín.: €%{y:,.0f}<extra></extra>",
-    ))
-    fig.add_trace(go.Bar(
-        x=dff["label"], y=dff["intereses"], name="Intereses",
-        marker_color=DORADO, opacity=0.9,
-        hovertemplate="<b>%{x}</b><br>Intereses: €%{y:,.0f}<extra></extra>",
-    ))
-
-    # Saldo pendiente como línea
-    fig.add_trace(go.Scatter(
-        x=dff["label"], y=dff["saldo_pendiente"],
-        mode="lines+markers", name="Saldo pendiente (eje der.)",
-        line=dict(color=ACENTO, width=2.5),
-        yaxis="y2",
-        hovertemplate="<b>%{x}</b><br>Saldo: €%{y:,.0f}<extra></extra>",
-    ))
-
-    # Proyección desde hoy hasta liquidación sep 2026
-    hoy = date.today()
-    fechas_proy = []
-    saldos_proy = []
-    saldo_actual = saldo_eur
-    for i in range(6):
-        mes_p  = (hoy.month + i - 1) % 12 + 1
-        anio_p = hoy.year + (hoy.month + i - 1) // 12
-        fechas_proy.append(lbl(anio_p, mes_p))
-        saldos_proy.append(max(0, saldo_actual - cuota_eur * i))
-
-    fig.add_trace(go.Scatter(
-        x=fechas_proy, y=saldos_proy,
-        mode="lines", name="Proyección liquidación",
-        line=dict(color=VERDE, width=2, dash="dot"),
-        yaxis="y2",
-        hovertemplate="<b>%{x}</b><br>Proyección: €%{y:,.0f}<extra></extra>",
-    ))
-
-    # Anotación liquidación
-    fig.add_annotation(
-        x=f"Sep {LIQUIDACION_ANIO}", y=0,
-        text=f"<b>Liquidación</b><br>Sep {LIQUIDACION_ANIO}",
-        showarrow=True, arrowhead=2, arrowcolor=VERDE,
-        font=dict(color=VERDE, size=10),
-        bgcolor=FONDO2, bordercolor=VERDE,
-        yref="y2",
-    )
-
-    layout_base(fig, "💳 Deuda TC — Evolución y Proyección Liquidación Sep 2026")
-    fig.update_layout(
-        barmode="stack",
-        yaxis_title="EUR / mes",
-        yaxis2=dict(
-            title=dict(text="Saldo pendiente (EUR)",
-                       font=dict(color=ACENTO)),
-            overlaying="y", side="right",
-            gridcolor="rgba(0,0,0,0)",
-            tickfont=dict(size=9, color=ACENTO),
-        ),
-        xaxis_tickangle=45,
-        margin=dict(t=45, b=80, l=55, r=60),
-        legend=dict(
-            orientation="h",
-            yanchor="top",
-            y=-0.28,
-            xanchor="center",
-            x=0.5,
-            font=dict(size=9, color=TEXTO),
-        ),
-    )
+    fig.add_hline(y=0, line_color=TEXTO, line_width=1.5)
+    if len(merged) > 2:
+        prom = merged["balance"].mean()
+        fig.add_hline(y=prom, line_dash="dot", line_color=DORADO, opacity=0.7,
+                      annotation_text=f"Prom. €{prom:,.0f}",
+                      annotation_font_color=DORADO)
+    layout_base(fig, "💰 Balance Mensual (Ingresos − Gastos)")
+    fig.update_layout(yaxis_title="EUR / mes", xaxis_tickangle=45, showlegend=False)
     return fig
 
 
