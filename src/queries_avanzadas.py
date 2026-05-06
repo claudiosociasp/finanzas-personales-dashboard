@@ -29,11 +29,11 @@ MESES = {1:"Ene",2:"Feb",3:"Mar",4:"Abr",5:"May",6:"Jun",
          7:"Jul",8:"Ago",9:"Sep",10:"Oct",11:"Nov",12:"Dic"}
 
 TC_ACTUAL        = 1070.0
-SALDO_CLP        = 6520310
+SALDO_CLP        = 6312618
 CUOTA_CLP        = 283327
 TASA_MENSUAL     = 0.0116
 TOTAL_CUOTAS     = 35
-CUOTA_ACTUAL     = 8
+CUOTA_ACTUAL     = 9
 LIQUIDACION_MES  = 9
 LIQUIDACION_ANIO = 2026
 
