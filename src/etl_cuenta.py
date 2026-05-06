@@ -281,3 +281,20 @@ if __name__ == "__main__":
             print(f"\nComisiones totales pagadas: ${total_comisiones:,.0f} CLP")
 
         print(f"\nBase de datos: {BASE_DIR / 'finanzas.db'}")
+        print(f"\nBase de datos: {BASE_DIR / 'finanzas.db'}")
+        
+        # Eliminar duplicados
+        import sqlite3
+        conn_dedup = sqlite3.connect(str(BASE_DIR / 'finanzas.db'))
+        cur = conn_dedup.cursor()
+        cur.execute('''
+            DELETE FROM cc_movimientos
+            WHERE rowid NOT IN (
+                SELECT MIN(rowid)
+                FROM cc_movimientos
+                GROUP BY fecha, descripcion, cargo_clp, abono_clp
+            )
+        ''')
+        conn_dedup.commit()
+        print(f"  Duplicados eliminados: {cur.rowcount}")
+        conn_dedup.close()
