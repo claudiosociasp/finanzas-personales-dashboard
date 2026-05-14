@@ -47,7 +47,8 @@ def main():
 
     # ── Datos públicos — copiar tal cual ──────────────────────────
     for tabla in ["tipo_cambio", "categorias", "mercado_ipc",
-                  "mercado_alquiler", "mercado_salarios"]:
+                  "mercado_alquiler", "mercado_salarios",
+                  "ingresos_madrid", "gastos_fijos_madrid", "inversiones"]:
         df = pd.read_sql(f"SELECT * FROM {tabla}", conn_real)
         df.to_sql(tabla, engine_demo, if_exists="replace", index=False)
         print(f"  {tabla}: {len(df)} registros copiados")
